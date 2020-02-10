@@ -16,6 +16,8 @@ const HMS    = require('./status-codes');
 const HME             = require('./event-codes');
 const ResumeConverter = require('fresh-jrs-converter');
 const resumeDetect    = require('../utils/resume-detector');
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 require('string.prototype.startswith');
 
 
@@ -44,16 +46,16 @@ module.exports = {
       }
 
   */
-  load( sources, opts, emitter ) {
-    return sources.map( function(src) {
-      return this.loadOne( src, opts, emitter );
+  async load( sources, opts, emitter ) {
+    return await sources.map(async function(src) {
+      return await this.loadOne( src, opts, emitter );
     }
     , this);
   },
 
 
   /** Load a single resume from disk.  */
-  loadOne( src, opts, emitter ) {
+  async loadOne( src, opts, emitter ) {
 
     let toFormat = opts.format;     // Can be null
 
@@ -96,14 +98,14 @@ module.exports = {
 };
 
 
-var _parse = function( fileName, opts, eve ) {
+var _parse = async function( fileName, opts, eve ) {
 
   let rawData = null;
   try {
 
     // Read the file
     eve && eve.stat( HME.beforeRead, { file: fileName });
-    rawData = FS.readFileSync( fileName, 'utf8' );
+    rawData = await readFileAsync( fileName, 'utf8' );
     eve && eve.stat( HME.afterRead, { file: fileName, data: rawData });
 
     // Parse the file

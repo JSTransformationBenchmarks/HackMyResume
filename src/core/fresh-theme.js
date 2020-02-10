@@ -21,8 +21,8 @@ const EXTEND = require('extend');
 const HMSTATUS = require('./status-codes');
 const loadSafeJson = require('../utils/safe-json-loader');
 const READFILES = require('recursive-readdir-sync');
-
-
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 
 /* A representation of a FRESH theme asset.
 @class FRESHTheme */
@@ -33,7 +33,7 @@ class FRESHTheme {
   }
 
   /* Open and parse the specified theme. */
-  open( themeFolder ) {
+  async open( themeFolder ) {
 
     this.folder = themeFolder;
 
@@ -79,13 +79,13 @@ class FRESHTheme {
           themePath = PATH.join(d, th);
         }
 
-        cached[ th ] = cached[th] || new FRESHTheme().open( themePath );
+        cached[ th ] = cached[th] || await new FRESHTheme().open( themePath );
         return formatsHash[ key ] = cached[ th ].getFormat( key );
       });
     }
 
     // Load theme files
-    formatsHash = _load.call(this, formatsHash);
+    formatsHash = await _load.call(this, formatsHash);
 
     // Cache
     this.formats = formatsHash;
@@ -105,7 +105,7 @@ class FRESHTheme {
 
 
 /* Load and parse theme source files. */
-var _load = function(formatsHash) {
+var _load = async function(formatsHash) {
 
   const that = this;
   const tplFolder = PATH.join(this.folder, this.baseFolder);
@@ -147,7 +147,7 @@ var _load = function(formatsHash) {
 
 
 /* Load a single theme file. */
-var _loadOne = function( absPath, formatsHash, tplFolder ) {
+var _loadOne = async function( absPath, formatsHash, tplFolder ) {
 
   const pathInfo = parsePath(absPath);
   if (pathInfo.basename.toLowerCase() === 'theme.json') { return; }
@@ -226,7 +226,7 @@ var _loadOne = function( absPath, formatsHash, tplFolder ) {
     title: friendlyName(outFmt),
     pre: outFmt,
     // outFormat: outFmt || pathInfo.name,
-    data: FS.readFileSync(absPath, 'utf8'),
+    data: await readFileAsync(absPath, 'utf8'),
     css: null
   };
 

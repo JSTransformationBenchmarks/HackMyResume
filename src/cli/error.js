@@ -21,6 +21,9 @@ const chalk = require('chalk');
 const extend = require('extend');
 const printf = require('printf');
 const SyntaxErrorEx = require('../utils/syntax-error-ex');
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
+
 require('string.prototype.startswith');
 
 
@@ -37,7 +40,7 @@ module.exports = {
     return this;
   },
 
-  err( ex, shouldExit ) {
+  async err( ex, shouldExit ) {
 
     // Short-circuit logging output if --silent is on
     let stack;
@@ -106,7 +109,7 @@ var _defaultLog = function() { return console.log.apply(console.log, arguments);
 
 
 
-var assembleError = function( ex ) {
+var assembleError = async function( ex ) {
 
   let se;
   let msg = '';
@@ -128,7 +131,7 @@ var assembleError = function( ex ) {
 
     case HMSTATUS.resumeNotFound:
       //msg = M2C( this.msgs.resumeNotFound.msg, 'yellow' );
-      msg += M2C(FS.readFileSync(
+      msg += M2C(await readFileAsync(
         PATH.resolve(__dirname, `help/${ex.verb}.txt`), 'utf8' ), 'white', 'yellow');
       break;
 
@@ -139,7 +142,7 @@ var assembleError = function( ex ) {
       //     chalk.yellow.bold(v.toUpperCase());
       // ).join( chalk.yellow(', ')) + chalk.yellow(").\n\n");
 
-      msg += M2C(FS.readFileSync(
+      msg += M2C(await readFileAsync(
         PATH.resolve(__dirname, 'help/use.txt'), 'utf8' ), 'white', 'yellow');
       break;
 
@@ -198,7 +201,7 @@ var assembleError = function( ex ) {
     case HMSTATUS.invalidHelperUse:
       msg = printf( M2C( this.msgs.invalidHelperUse.msg ), ex.helper );
       if (ex.error) {
-        msg += `\n--> ${assembleError.call( this, extend( true, {}, ex, {fluenterror: ex.error} )).msg}`;
+        msg += `\n--> ${await assembleError.call( this, extend( true, {}, ex, {fluenterror: ex.error} )).msg}`;
       }
         //msg += printf( '\n--> ' + M2C( this.msgs.invalidParamCount.msg ), ex.expected );
       quit = false;
@@ -238,7 +241,7 @@ var assembleError = function( ex ) {
     case HMSTATUS.themeLoad:
       msg = M2C( printf( this.msgs.themeLoad.msg, ex.attempted.toUpperCase() ), 'red');
       if (ex.inner && ex.inner.fluenterror) {
-        msg += M2C('\nError: ', 'red') + assembleError.call( this, ex.inner ).msg;
+        msg += M2C('\nError: ', 'red') + await assembleError.call( this, ex.inner ).msg;
       }
       quit = true;
       etype = 'custom';

@@ -18,6 +18,8 @@ const SLASH = require('slash');
 const _ = require('underscore');
 const HMSTATUS = require('../core/status-codes');
 const SPAWN = require('../utils/safe-spawn');
+const util = require('util');
+const writeFileAsync = util.promisify(FS.writeFile);
 
 
 /**
@@ -72,10 +74,10 @@ var engines = {
   TODO: If HTML generation has run, reuse that output
   TODO: Local web server to ease wkhtmltopdf rendering
   */
-  wkhtmltopdf(markup, fOut, opts, on_error) {
+  async wkhtmltopdf(markup, fOut, opts, on_error) {
     // Save the markup to a temporary file
     const tempFile = fOut.replace(/\.pdf$/i, '.pdf.html');
-    FS.writeFileSync(tempFile, markup, 'utf8');
+    await writeFileAsync(tempFile, markup, 'utf8');
 
     // Prepare wkhtmltopdf arguments.
     let wkopts = _.extend({'margin-top': '10mm', 'margin-bottom': '10mm'}, opts.wkhtmltopdf);
@@ -94,10 +96,10 @@ var engines = {
   TODO: If HTML generation has run, reuse that output
   TODO: Local web server to ease Phantom rendering
   */
-  phantomjs( markup, fOut, opts, on_error ) {
+  async phantomjs( markup, fOut, opts, on_error ) {
     // Save the markup to a temporary file
     const tempFile = fOut.replace(/\.pdf$/i, '.pdf.html');
-    FS.writeFileSync(tempFile, markup, 'utf8');
+    await writeFileAsync(tempFile, markup, 'utf8');
     let scriptPath = PATH.relative(process.cwd(), PATH.resolve( __dirname, '../utils/rasterize.js' ));
     scriptPath = SLASH(scriptPath);
     const sourcePath = SLASH(PATH.relative( process.cwd(), tempFile));
@@ -111,10 +113,10 @@ var engines = {
   must be installed and path-accessible.
   TODO: If HTML generation has run, reuse that output
   */
-  weasyprint( markup, fOut, opts, on_error ) {
+  async weasyprint( markup, fOut, opts, on_error ) {
     // Save the markup to a temporary file
     const tempFile = fOut.replace(/\.pdf$/i, '.pdf.html');
-    FS.writeFileSync(tempFile, markup, 'utf8');
+    await writeFileAsync(tempFile, markup, 'utf8');
 
     SPAWN('weasyprint', [tempFile, fOut], false, on_error, this);
   }

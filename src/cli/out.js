@@ -23,8 +23,8 @@ const YAML = require('yamljs');
 let printf = require('printf');
 const pad = require('string-padding');
 const dbgStyle = 'cyan';
-
-
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 
 /** A stateful output module. All HMR console output handled here. */
 class OutputHandler {
@@ -52,7 +52,7 @@ class OutputHandler {
 
 
 
-  do( evt ) {
+  async do( evt ) {
 
     const that = this;
     const L = function() { return that.log.apply( that, arguments ); };
@@ -132,7 +132,7 @@ class OutputHandler {
 
       case HME.afterAnalyze:
         var { info } = evt;
-        var rawTpl = FS.readFileSync( PATH.join( __dirname, 'analyze.hbs' ), 'utf8');
+        var rawTpl = await readFileAsync( PATH.join( __dirname, 'analyze.hbs' ), 'utf8');
         HANDLEBARS.registerHelper( require('../helpers/console-helpers') );
         var template = HANDLEBARS.compile(rawTpl, { strict: false, assumeObjects: false });
         var tot = 0;

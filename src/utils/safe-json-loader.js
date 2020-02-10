@@ -11,11 +11,13 @@ Definition of the SafeJsonLoader class.
 
 const FS = require('fs');
 const SyntaxErrorEx = require('./syntax-error-ex');
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 
-module.exports = function( file ) {
+module.exports = async function( file ) {
   const ret = { };
   try {
-    ret.raw = FS.readFileSync( file, 'utf8' );
+    ret.raw = await readFileAsync( file, 'utf8' );
     ret.json = JSON.parse( ret.raw );
   } catch (err) {
     // If we get here, either FS.readFileSync or JSON.parse failed.

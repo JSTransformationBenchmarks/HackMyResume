@@ -21,7 +21,8 @@ const XML = require('xml-escape');
 const MD = require('marked');
 const CONVERTER = require('fresh-jrs-converter');
 const JRSResume = require('./jrs-resume');
-
+const util = require('util');
+const writeFileAsync = util.promisify(FS.writeFile);
 
 
 /**
@@ -95,9 +96,9 @@ class FreshResume {// extends AbstractResume
 
 
   /** Save the sheet to disk (for environments that have disk access). */
-  save( filename ) {
+  async save( filename ) {
     this.imp.file = filename || this.imp.file;
-    FS.writeFileSync(this.imp.file, this.stringify(), 'utf8');
+    await writeFileAsync(this.imp.file, this.stringify(), 'utf8');
     return this;
   }
 
@@ -106,7 +107,7 @@ class FreshResume {// extends AbstractResume
   /**
   Save the sheet to disk in a specific format, either FRESH or JSON Resume.
   */
-  saveAs( filename, format ) {
+  async saveAs( filename, format ) {
 
     // If format isn't specified, default to FRESH
     const safeFormat = (format && format.trim()) || 'FRESH';
@@ -120,12 +121,12 @@ class FreshResume {// extends AbstractResume
 
     if (parts[0] === 'FRESH') {
       this.imp.file = filename || this.imp.file;
-      FS.writeFileSync(this.imp.file, this.stringify(), 'utf8');
+      await writeFileAsync(this.imp.file, this.stringify(), 'utf8');
 
     } else if (parts[0] === 'JRS') {
       const useEdgeSchema = parts.length > 1 ? parts[1] === '1' : false;
       const newRep = CONVERTER.toJRS(this, {edge: useEdgeSchema});
-      FS.writeFileSync(filename, JRSResume.stringify( newRep ), 'utf8');
+      await writeFileAsync(filename, JRSResume.stringify( newRep ), 'utf8');
     } else {
       throw {badVer: safeFormat};
     }

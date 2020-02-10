@@ -20,6 +20,8 @@ const parsePath = require('parse-filepath');
 const MKDIRP = require('mkdirp');
 const BaseGenerator = require('./base-generator');
 const EXTEND = require('extend');
+const util = require('util');
+const writeFileAsync = util.promisify(FS.writeFile);
 
 
 
@@ -96,7 +98,7 @@ class TemplateGenerator extends BaseGenerator {
   @param f Full path to the output resume file to generate.
   @param opts Generator options. */
 
-  generate( rez, f, opts ) {
+  async generate( rez, f, opts ) {
 
     // Prepare
     this.opts = EXTEND(true, { }, _defaultOpts, opts);
@@ -140,7 +142,7 @@ class TemplateGenerator extends BaseGenerator {
       MKDIRP.sync(PATH.dirname( thisFilePath ));
 
       if (file.info.action !== 'copy') {
-        FS.writeFileSync(thisFilePath, file.data, {encoding: 'utf8', flags: 'w'});
+        await writeFileAsync(thisFilePath, file.data, {encoding: 'utf8', flags: 'w'});
       } else {
         FS.copySync(file.info.path, thisFilePath);
       }

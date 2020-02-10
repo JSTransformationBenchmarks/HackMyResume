@@ -19,7 +19,9 @@ let validator = require('is-my-json-valid');
 const _ = require('underscore');
 const PATH = require('path');
 const CONVERTER = require('fresh-jrs-converter');
-
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
+const writeFileAsync = util.promisify(FS.writeFile);
 
 /**
 A JRS resume or CV. JRS resumes are backed by JSON, and each JRSResume object
@@ -112,23 +114,23 @@ class JRSResume {
 
 
   /** Save the sheet to disk (for environments that have disk access). */
-  save( filename ) {
+  async save( filename ) {
     this.imp.file = filename || this.imp.file;
-    FS.writeFileSync(this.imp.file, this.stringify( this ), 'utf8');
+    await writeFileAsync(this.imp.file, this.stringify( this ), 'utf8');
     return this;
   }
 
 
 
   /** Save the sheet to disk in a specific format, either FRESH or JRS. */
-  saveAs( filename, format ) {
+  async saveAs( filename, format ) {
     if (format === 'JRS') {
       this.imp.file = filename || this.imp.file;
-      FS.writeFileSync( this.imp.file, this.stringify(), 'utf8' );
+      await writeFileAsync( this.imp.file, this.stringify(), 'utf8' );
     } else {
       const newRep = CONVERTER.toFRESH(this);
       const stringRep = CONVERTER.toSTRING(newRep);
-      FS.writeFileSync(filename, stringRep, 'utf8');
+      await writeFileAsync(filename, stringRep, 'utf8');
     }
     return this;
   }
@@ -196,8 +198,8 @@ class JRSResume {
 
 
   /** Validate the sheet against the JSON Resume schema. */
-  isValid( ) { // TODO: ↓ fix this path ↓
-    const schema = FS.readFileSync(PATH.join( __dirname, 'resume.json' ), 'utf8');
+  async isValid( ) { // TODO: ↓ fix this path ↓
+    const schema = await readFileAsync(PATH.join( __dirname, 'resume.json' ), 'utf8');
     const schemaObj = JSON.parse(schema);
     validator = require('is-my-json-valid');
     const validate = validator( schemaObj, { // Note [1]

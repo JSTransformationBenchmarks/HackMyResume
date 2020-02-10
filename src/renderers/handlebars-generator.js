@@ -19,8 +19,8 @@ const parsePath = require('parse-filepath');
 const READFILES = require('recursive-readdir-sync');
 const HMSTATUS = require('../core/status-codes');
 const SLASH = require('slash');
-
-
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 
 /**
 Perform template-based resume generation using Handlebars.js.
@@ -87,7 +87,7 @@ module.exports = {
 
 
 
-var registerPartials = function(format, theme) {
+var registerPartials = async function(format, theme) {
 
   if (_.contains( ['html','doc','md','txt','pdf'], format )) {
 
@@ -100,9 +100,9 @@ var registerPartials = function(format, theme) {
 
     // Register global partials in the /partials/[format] folder
     // TODO: Only do this once per HMR invocation.
-    _.each(READFILES( partialsFolder ), function( el ) {
+    await _.each(READFILES( partialsFolder ),async function( el ) {
       const name = SLASH(PATH.relative( partialsFolder, el ).replace(/\.(?:html|xml|hbs|md|txt)$/i, ''));
-      const tplData = FS.readFileSync(el, 'utf8');
+      const tplData = await readFileAsync(el, 'utf8');
       const compiledTemplate = HANDLEBARS.compile(tplData);
       HANDLEBARS.registerPartial(name, compiledTemplate);
       return theme.partialsInitialized = true;
@@ -110,8 +110,8 @@ var registerPartials = function(format, theme) {
   }
 
   // Register theme-specific partials
-  return _.each(theme.partials, function( el ) {
-    const tplData = FS.readFileSync(el.path, 'utf8');
+  return await _.each(theme.partials, async function( el ) {
+    const tplData = await readFileAsync(el.path, 'utf8');
     const compiledTemplate = HANDLEBARS.compile(tplData);
     return HANDLEBARS.registerPartial(el.name, compiledTemplate);
   });

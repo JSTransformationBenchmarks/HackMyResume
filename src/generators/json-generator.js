@@ -12,6 +12,8 @@ Definition of the JsonGenerator class.
 const BaseGenerator = require('./base-generator');
 const FS = require('fs');
 const FJCV = require('fresh-jrs-converter');
+const util = require('util');
+const writeFileAsync = util.promisify(FS.writeFile);
 
 /** The JsonGenerator generates a FRESH or JRS resume as an output. */
 
@@ -25,8 +27,8 @@ class JsonGenerator extends BaseGenerator {
   }
     //altRez.stringify()
 
-  generate( rez, f ) {
-    FS.writeFileSync(f, this.invoke(rez), 'utf8');
+  async generate( rez, f ) {
+    await writeFileAsync(f, this.invoke(rez), 'utf8');
   }
 }
 

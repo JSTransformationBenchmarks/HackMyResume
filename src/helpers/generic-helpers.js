@@ -23,6 +23,8 @@ const LO = require('lodash');
 const PATH = require('path');
 const printf = require('printf');
 const _ = require('underscore');
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 require('../utils/string');
 
 
@@ -495,7 +497,7 @@ var GenericHelpers = (module.exports = {
   `link`. If omitted, defaults to `embed`. Can be overridden by the `--css`
   command-line switch.
   */
-  styleSheet( url, linkage ) {
+  async styleSheet( url, linkage ) {
 
     // Establish the linkage style
     linkage = this.opts.css || linkage || 'embed';
@@ -505,7 +507,7 @@ var GenericHelpers = (module.exports = {
     if (linkage === 'link') {
       ret = printf('<link href="%s" rel="stylesheet" type="text/css">', url);
     } else {
-      const rawCss = FS.readFileSync(
+      const rawCss = await readFileAsync(
         PATH.join( this.opts.themeObj.folder, '/src/', url ), 'utf8' );
       const renderedCss = this.engine.generateSimple( this, rawCss );
       ret = printf('<style>%s</style>', renderedCss );

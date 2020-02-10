@@ -14,7 +14,8 @@ Definition of the JsonYamlGenerator class.
 const BaseGenerator = require('./base-generator');
 const FS = require('fs');
 const YAML = require('yamljs');
-
+const util = require('util');
+const writeFileAsync = util.promisify(FS.writeFile);
 
 
 /**
@@ -31,9 +32,9 @@ class JsonYamlGenerator extends BaseGenerator {
     return YAML.stringify(JSON.parse( rez.stringify() ), Infinity, 2);
   }
 
-  generate( rez, f/*, opts */) {
+  async generate( rez, f/*, opts */) {
     const data = YAML.stringify(JSON.parse( rez.stringify() ), Infinity, 2);
-    FS.writeFileSync(f, data, 'utf8');
+    await writeFileAsync(f, data, 'utf8');
     return data;
   }
 }

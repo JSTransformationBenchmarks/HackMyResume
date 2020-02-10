@@ -32,7 +32,8 @@ const _out = new OUTPUT( _opts );
 const _err = require('./error');
 let _exitCallback = null;
 
-
+const util = require('util');
+const readFileAsync = util.promisify(FS.readFile);
 
 /*
 A callable implementation of the HackMyResume CLI. Encapsulates the command
@@ -41,7 +42,7 @@ line interface as a single method accepting a parameter array.
 @param rawArgs {Array} An array of command-line parameters. Will either be
 process.argv (in production) or custom parameters (in test).
 */
-module.exports = function( rawArgs, exitCallback ) {
+module.exports = async function( rawArgs, exitCallback ) {
 
   const initInfo = initialize( rawArgs, exitCallback );
   if (initInfo === null) {
@@ -135,13 +136,13 @@ module.exports = function( rawArgs, exitCallback ) {
     });
 
   // Create the HELP command
-  program
+  await program
     .command('help')
     .arguments('[command]')
     .description('Get help on a HackMyResume command')
-    .action(function( cmd ) {
+    .action(async function( cmd ) {
       cmd = cmd || 'use';
-      const manPage = FS.readFileSync(
+      const manPage = await readFileAsync(
         PATH.join(__dirname, `help/${cmd}.txt`),
         'utf8');
       _out.log(M2C(manPage, 'white', 'yellow.bold'));
@@ -157,7 +158,7 @@ module.exports = function( rawArgs, exitCallback ) {
 
 
 /* Massage command-line args and setup Commander.js. */
-var initialize = function( ar, exitCallback ) {
+var initialize = async function( ar, exitCallback ) {
 
   _exitCallback = exitCallback || process.exit;
   const o = initOptions(ar);
@@ -208,8 +209,8 @@ var initialize = function( ar, exitCallback ) {
   };
 
   // Override the .helpInformation behavior
-  Command.prototype.helpInformation = function() {
-    const manPage = FS.readFileSync(
+  Command.prototype.helpInformation = async function() {
+    const manPage = await readFileAsync(
       PATH.join(__dirname, 'help/use.txt'), 'utf8' );
     return M2C(manPage, 'white', 'yellow');
   };
